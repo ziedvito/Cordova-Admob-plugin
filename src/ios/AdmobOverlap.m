@@ -2,11 +2,11 @@
 //Email: cranberrygame@yahoo.com
 //Homepage: http://cranberrygame.github.io
 //License: MIT (http://opensource.org/licenses/MIT)
-#import "AdmobOverlap.h"
+#import "AdMobOverlap.h"
 #import <AdSupport/ASIdentifierManager.h>
 #import <CommonCrypto/CommonDigest.h> //md5
 
-@implementation AdmobOverlap
+@implementation AdMobOverlap
 
 @synthesize plugin;
 //
@@ -20,10 +20,12 @@
 @synthesize lastOrientation;
 //
 @synthesize bannerAdPreload;	
-@synthesize fullScreenAdPreload;
+@synthesize interstitialAdPreload;
+@synthesize rewardedVideoAdPreload;
 //admob
 @synthesize bannerView;
-@synthesize interstitialView;
+@synthesize interstitial;
+@synthesize rewardedVideo;
 
 /*
 - (CDVPlugin *) initWithWebView:(UIWebView *)theWebView {
@@ -32,7 +34,7 @@
         [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
         [[NSNotificationCenter defaultCenter]
          addObserver:self
-         selector:@selector(deviceOrientationChangeAdmob:)
+         selector:@selector(deviceOrientationChangeAdMob:)
          name:UIDeviceOrientationDidChangeNotification
          object:nil];
     }
@@ -40,7 +42,7 @@
 }
 */
 
-- (void) deviceOrientationChangeAdmob:(NSNotification *)notification {
+- (void) deviceOrientationChangeAdMob:(NSNotification *)notification {
     if (bannerView != nil) {
 /*	
         CGRect bannerFrame = bannerView.frame;
@@ -75,9 +77,10 @@
 - (void) _setLicenseKey:(NSString *)email aLicenseKey:(NSString *)licenseKey {
 }
 
-- (void) _setUp:(NSString *)bannerAdUnit anInterstitialAdUnit:(NSString *)interstitialAdUnit anIsOverlap:(BOOL)isOverlap anIsTest:(BOOL)isTest {
+- (void) _setUp:(NSString *)bannerAdUnit anInterstitialAdUnit:(NSString *)interstitialAdUnit aRewardedVideoAdUnit:(NSString *)rewardedVideoAdUnit anIsOverlap:(BOOL)isOverlap anIsTest:(BOOL)isTest {
 	self.bannerAdUnit = bannerAdUnit;
-	self.interstitialAdUnit = interstitialAdUnit;
+    self.interstitialAdUnit = interstitialAdUnit;
+    self.rewardedVideoAdUnit = rewardedVideoAdUnit;
 	self.isOverlap = isOverlap;
 	self.isTest = isTest;	
 }
@@ -320,17 +323,16 @@
 }
 
 - (void) _preloadInterstitialAd {    
-	self.fullScreenAdPreload = YES;	
+	self.interstitialAdPreload = YES;	
 	
 	[self loadinterstitialAd];
 }
 
 - (void) loadinterstitialAd {
-    if (interstitialView == nil || self.interstitialView.hasBeenUsed){//ios only //An interstitial object can only be used once for ios
-        self.interstitialView = [[GADInterstitial alloc] init];
+    if (interstitial == nil || self.interstitial.hasBeenUsed){//ios only //An interstitial object can only be used once for ios
+        self.interstitial = [[GADInterstitial alloc] initWithAdUnitID: interstitialAdUnit];
         //
-		self.interstitialView.adUnitID = interstitialAdUnit;
-        self.interstitialView.delegate = self;
+        self.interstitial.delegate = self;
     }	
 	
 	GADRequest *request = [GADRequest request];
@@ -342,21 +344,58 @@
         [self md5:adid.UUIDString],
         nil];
     }
-	[self.interstitialView loadRequest:request];
+	[self.interstitial loadRequest:request];
 }
 
 - (void) _showInterstitialAd {
-	if(fullScreenAdPreload) {
-		fullScreenAdPreload = NO;
+	if(interstitialAdPreload) {
+		interstitialAdPreload = NO;
 
-		[self.interstitialView presentFromRootViewController:[self.plugin getViewController]];
+		[self.interstitial presentFromRootViewController:[self.plugin getViewController]];
 	}
 	else{	
 		[self loadinterstitialAd];
 	}		
 }
 
-//GADBannerViewDelegate
+
+- (void) _preloadRewardedVideoAd {
+    rewardedVideoAdPreload = YES;
+    
+    [self loadRewardedVideoAd];
+}
+
+- (void) loadRewardedVideoAd {
+    if (rewardedVideo == nil){
+        self.rewardedVideo = [GADRewardBasedVideoAd sharedInstance];
+        //
+        self.rewardedVideo.delegate = self;
+    }	
+	
+	GADRequest *request = [GADRequest request];
+    if (self.isTest) {
+        NSUUID* adid = [[ASIdentifierManager sharedManager] advertisingIdentifier];
+        request.testDevices =
+        [NSArray arrayWithObjects:
+        // TODO: Add your device/simulator test identifiers here. They are printed to the console when the app is launched.
+        [self md5:adid.UUIDString],
+        nil];
+    }
+	[self.rewardedVideo loadRequest:request withAdUnitID:self.rewardedVideoAdUnit];
+}
+
+- (void) _showRewardedVideoAd {
+    if(rewardedVideoAdPreload) {
+        rewardedVideoAdPreload = NO;
+        
+        [rewardedVideo presentFromRootViewController:[plugin getViewController]];
+    }
+    else {
+        [self loadRewardedVideoAd];
+    }
+}
+
+#pragma mark GADBannerViewDelegate
 
 - (void) adViewDidReceiveAd:(GADBannerView *)view {
 	NSLog(@"adViewDidReceiveAd");
@@ -401,12 +440,12 @@
 	NSLog(@"adViewDidDismissScreen");//onBannerAdHidden x
 }
 
-//GADInterstitialDelegate
+#pragma mark GADInterstitialDelegate
 
 - (void) interstitialDidReceiveAd:(GADInterstitial *)ad {
 	NSLog(@"interstitialDidReceiveAd");
 	
-	if(fullScreenAdPreload) {
+	if(interstitialAdPreload) {
 		CDVPluginResult* pr = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"onInterstitialAdPreloaded"];
 		[pr setKeepCallbackAsBool:YES];
 		[[self.plugin getCommandDelegate] sendPluginResult:pr callbackId:[self.plugin getCallbackIdKeepCallback]];
@@ -422,8 +461,8 @@
 	//[pr setKeepCallbackAsBool:YES];
 	//[[self.plugin getCommandDelegate] sendPluginResult:pr callbackId:[self.plugin getCallbackIdKeepCallback]];
 	
-	if(!fullScreenAdPreload) {
-		[self.interstitialView presentFromRootViewController:[self.plugin getViewController]];
+	if(!interstitialAdPreload) {
+		[self.interstitial presentFromRootViewController:[self.plugin getViewController]];
 	}
 }
 
@@ -460,6 +499,86 @@
 	//[pr setKeepCallbackAsBool:YES];
 	//[[self.plugin getCommandDelegate] sendPluginResult:pr callbackId:[self.plugin getCallbackIdKeepCallback]];
 }
+
+#pragma mark GADRewardBasedVideoAdDelegate
+
+- (void)rewardBasedVideoAdDidReceiveAd:(GADRewardBasedVideoAd *)rewardBasedVideoAd {
+	NSLog(@"rewardBasedVideoAdDidReceiveAd");
+
+	if(rewardedVideoAdPreload) {
+		CDVPluginResult* pr = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"onRewardedVideoAdPreloaded"];
+		[pr setKeepCallbackAsBool:YES];
+		[[self.plugin getCommandDelegate] sendPluginResult:pr callbackId:[self.plugin getCallbackIdKeepCallback]];
+		//CDVPluginResult* pr = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+		//[pr setKeepCallbackAsBool:YES];
+		//[self.commandDelegate sendPluginResult:pr callbackId:self.callbackIdKeepCallback];			
+	}
+	
+	CDVPluginResult* pr = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"onRewardedVideoAdLoaded"];
+	[pr setKeepCallbackAsBool:YES];
+	[[self.plugin getCommandDelegate] sendPluginResult:pr callbackId:[self.plugin getCallbackIdKeepCallback]];
+	//CDVPluginResult* pr = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+	//[pr setKeepCallbackAsBool:YES];
+	//[[self.plugin getCommandDelegate] sendPluginResult:pr callbackId:[self.plugin getCallbackIdKeepCallback]];
+	
+	if(!rewardedVideoAdPreload) {
+		[rewardedVideo presentFromRootViewController:[plugin getViewController]];
+	}
+}
+
+- (void)rewardBasedVideoAd:(GADRewardBasedVideoAd *)rewardBasedVideoAd didFailToLoadWithError:(NSError *)error {
+	NSLog(@"rewardBasedVideoAd");
+}
+
+- (void)rewardBasedVideoAdWillLeaveApplication:(GADRewardBasedVideoAd *)rewardBasedVideoAd {
+	NSLog(@"rewardBasedVideoAdWillLeaveApplication");
+}
+
+- (void)rewardBasedVideoAdDidOpen:(GADRewardBasedVideoAd *)rewardBasedVideoAd {
+	NSLog(@"rewardBasedVideoAdDidOpen");
+    
+    CDVPluginResult* pr = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"onRewardedVideoAdShown"];
+    [pr setKeepCallbackAsBool:YES];
+    [[self.plugin getCommandDelegate] sendPluginResult:pr callbackId:[self.plugin getCallbackIdKeepCallback]];
+    //CDVPluginResult* pr = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+    //[pr setKeepCallbackAsBool:YES];
+    //[[self.plugin getCommandDelegate] sendPluginResult:pr callbackId:[self.plugin getCallbackIdKeepCallback]];
+}
+
+- (void)rewardBasedVideoAdDidStartPlaying:(GADRewardBasedVideoAd *)rewardBasedVideoAd {
+	NSLog(@"rewardBasedVideoAdDidStartPlaying");
+}
+
+- (void)rewardBasedVideoAdDidClose:(GADRewardBasedVideoAd *)rewardBasedVideoAd {
+	NSLog(@"rewardBasedVideoAdDidClose");
+
+    CDVPluginResult* pr = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"onRewardedVideoAdHidden"];
+	[pr setKeepCallbackAsBool:YES];
+	[[self.plugin getCommandDelegate] sendPluginResult:pr callbackId:[self.plugin getCallbackIdKeepCallback]];
+    //CDVPluginResult* pr = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+	//[pr setKeepCallbackAsBool:YES];
+	//[[self.plugin getCommandDelegate] sendPluginResult:pr callbackId:[self.plugin getCallbackIdKeepCallback]];	
+}
+
+- (void)rewardBasedVideoAd:(GADRewardBasedVideoAd *)rewardBasedVideoAd didRewardUserWithReward:(GADAdReward *)reward {
+   NSLog(@"rewardBasedVideoAd");
+  
+/*
+    NSString* obj = [self __getProductShortName];
+    NSString* json = [NSString stringWithFormat:@"{'adNetwork':'%@','adType':'%@','adEvent':'%@','rewardType':'%@','rewardAmount':%lf}",
+                      obj, ADTYPE_REWARDVIDEO, EVENT_AD_PRESENT, reward.type, [reward.amount doubleValue]];
+    [self fireEvent:obj event:EVENT_AD_PRESENT withData:json];
+*/
+	
+    CDVPluginResult* pr = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"onRewardedVideoAdCompleted"];
+    [pr setKeepCallbackAsBool:YES];
+    [[self.plugin getCommandDelegate] sendPluginResult:pr callbackId:[self.plugin getCallbackIdKeepCallback]];
+    //CDVPluginResult* pr = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+    //[pr setKeepCallbackAsBool:YES];
+    //[[self.plugin getCommandDelegate] sendPluginResult:pr callbackId:[self.plugin getCallbackIdKeepCallback]];
+}
+
+//
 
 - (void) dealloc {
 	[[UIDevice currentDevice] endGeneratingDeviceOrientationNotifications];

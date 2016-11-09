@@ -2,7 +2,7 @@ Cordova AdMob plugin
 ====================
 
 # Overview #
-Show admob banner and interstitial ad
+Show admob banner, interstitial and rewarded video ad.
 
 [android, ios, wp8] [cordova cli] [xdk] [cocoon] [phonegap build service]
 
@@ -86,6 +86,13 @@ You can see Cordova Plugins in one page: http://cranberrygame.github.io?referrer
     Fixed ios not working onInterstitialAdHidden event issue.
 1.0.103
     Updated AdMob iOS SDK v7.3.1
+1.0.108
+    Fixed cocoon.io android canvas+ issue.
+1.0.111
+    Fixed cocoon.io android canvas+ banner issue.
+1.0.113
+    Updated AdMob iOS SDK v7.10.0
+    Added rewarded video ad
 
 To-Do:
 
@@ -271,6 +278,7 @@ The step to use admob mediation networks is following:<br>
 ```javascript
 var bannerAdUnit = "REPLACE_THIS_WITH_YOUR_BANNER_AD_UNIT";
 var interstitialAdUnit = "REPLACE_THIS_WITH_YOUR_INTERSTITIAL_AD_UNIT";
+var rewardedVideoAdUnit = "REPLACE_THIS_WITH_YOUR_REWARDED_VIDEO_AD_UNIT";
 var isOverlap = true; //true: overlap, false: split
 var isTest = true;
 /*
@@ -282,16 +290,19 @@ var isTest = true;
 if (navigator.userAgent.match(/Android/i)) {
 	bannerAdUnit = "REPLACE_THIS_WITH_YOUR_BANNER_AD_UNIT";
 	interstitialAdUnit = "REPLACE_THIS_WITH_YOUR_INTERSTITIAL_AD_UNIT";
+	rewardedVideoAdUnit = "REPLACE_THIS_WITH_YOUR_REWARDED_VIDEO_AD_UNIT";
 }
 //ios
 else if (navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i)) {
     bannerAdUnit = "REPLACE_THIS_WITH_YOUR_BANNER_AD_UNIT";
     interstitialAdUnit = "REPLACE_THIS_WITH_YOUR_INTERSTITIAL_AD_UNIT";
+	rewardedVideoAdUnit = "REPLACE_THIS_WITH_YOUR_REWARDED_VIDEO_AD_UNIT";
 }
 //wp8
 else if( navigator.userAgent.match(/Windows Phone/i) ) {
     bannerAdUnit = "REPLACE_THIS_WITH_YOUR_BANNER_AD_UNIT";
     interstitialAdUnit = "REPLACE_THIS_WITH_YOUR_INTERSTITIAL_AD_UNIT";
+	rewardedVideoAdUnit = "REPLACE_THIS_WITH_YOUR_REWARDED_VIDEO_AD_UNIT";
 }
 */
 
@@ -300,7 +311,7 @@ document.addEventListener("deviceready", function(){
     //you can get paid license key: https://cranberrygame.github.io/request_cordova_ad_plugin_paid_license_key
     //window.admob.setLicenseKey("yourEmailId@yourEmaildDamin.com", "yourLicenseKey");
 
-    window.admob.setUp(bannerAdUnit, interstitialAdUnit, isOverlap, isTest);
+    window.admob.setUp(bannerAdUnit, interstitialAdUnit, rewardedVideoAdUnit, isOverlap, isTest);
 
     //
     window.admob.onBannerAdPreloaded = function() {
@@ -328,6 +339,22 @@ document.addEventListener("deviceready", function(){
     window.admob.onInterstitialAdHidden = function() {
         alert('onInterstitialAdHidden');
     };
+	//
+	window.admob.onRewardedVideoAdPreloaded = function() {
+		alert('onRewardedVideoAdPreloaded');
+	};
+	window.admob.onRewardedVideoAdLoaded = function() {
+		alert('onRewardedVideoAdLoaded');
+	};
+	window.admob.onRewardedVideoAdShown = function() {
+		alert('onRewardedVideoAdShown');
+	};
+	window.admob.onRewardedVideoAdHidden = function() {
+		alert('onRewardedVideoAdHidden');
+	};
+	window.admob.onRewardedVideoAdCompleted = function() {
+		alert('onRewardedVideoAdCompleted');
+	};	
 }, false);
 	
 window.admob.preloadBannerAd();//option, download ad previously for fast show
@@ -349,11 +376,16 @@ window.admob.hideBannerAd();
 window.admob.preloadInterstitialAd();//option, download ad previously for fast show
 window.admob.showInterstitialAd();
 
+window.admob.preloadRewardedVideoAd();//option, download ad previously for fast show
+window.admob.showRewardedVideoAd();
+
 alert(window.admob.loadedBannerAd());//boolean: true or false
 alert(window.admob.loadedInterstitialAd());//boolean: true or false
+alert(window.admob.loadedRewardedVideoAd());//boolean: true or false
 
 alert(window.admob.isShowingBannerAd());//boolean: true or false
 alert(window.admob.isShowingInterstitialAd());//boolean: true or false
+alert(window.admob.isShowingRewardedVideoAd());//boolean: true or false
 ```
 # Examples #
 <a href="https://github.com/cranberrygame/cordova-plugin-ad-admob/blob/master/example/basic/index.html">example/basic/index.html</a><br>

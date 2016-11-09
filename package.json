@@ -1,7 +1,7 @@
 {
   "name": "cordova-plugin-ad-admob",
-  "version": "1.0.107",
-  "description": "Show admob banner and interstitial ad",
+  "version": "1.0.118",
+  "description": "Show admob banner, interstitial and rewarded video ad",
   "cordova": {
     "id": "cordova-plugin-ad-admob",
     "platforms": [
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cranberrygame/cordova-plugin-ad-admob.git"
+    "url": "git+https://github.com/ziedvito/Cordova-Admob-plugin.git"
   },
   "keywords": [
     "cordova",
@@ -34,7 +34,7 @@
   "author": "cranberrygame",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/cranberrygame/cordova-plugin-ad-admob/issues"
+    "url": "https://github.com/ziedvito/Cordova-Admob-plugin/issues"
   },
-  "homepage": "https://github.com/cranberrygame/cordova-plugin-ad-admob#readme"
+  "homepage": "https://github.com/ziedvito/Cordova-Admob-plugin#readme"
 }
